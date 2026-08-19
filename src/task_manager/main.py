@@ -70,4 +70,15 @@ def update_task(task_id: uuid.UUID, task_update: TaskUpdate, db: Session = Depen
     return task
 
 
+@app.delete("/tasks/{task_id}", status_code=204)
+def delete_task(task_id: uuid.UUID, db: Session = Depends(get_db)):
+    statement = select(Task).where(Task.id == task_id)
+    task = db.execute(statement).scalar_one_or_none()
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    db.delete(task)
+    db.commit()
+
+
 
