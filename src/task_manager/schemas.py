@@ -17,3 +17,10 @@ class TaskResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }  
+
+
+class TaskUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    completed: bool | None = None
+    

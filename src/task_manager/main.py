@@ -6,7 +6,7 @@ from sqlalchemy import select
 
 from task_manager.models import Task
 from task_manager.database import get_db
-from task_manager.schemas import TaskCreate, TaskResponse
+from task_manager.schemas import TaskCreate, TaskResponse, TaskUpdate
 
 
 app = FastAPI()
@@ -47,6 +47,27 @@ def get_task(task_id: uuid.UUID, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Task not found")
 
     return task 
+
+@app.patch("/tasks/{task_id}", response_model=TaskResponse)
+def update_task(task_id: uuid.UUID, task_update: TaskUpdate, db: Session = Depends(get_db)):
+    statement = select(Task).where(Task.id == task_id)
+    task = db.execute(statement).scalar_one_or_none()
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    update_data = task_update.model_dump(exclude_unset=True)
+    if not update_data:
+        raise HTTPException(
+            status_code=400,
+            detail="At least one field must be provided for update"
+        )
+    
+    for key,value in update_data.items():
+        setattr(task, key, value)
+
+    db.commit()
+    db.refresh(task)
+    return task
 
 
 
