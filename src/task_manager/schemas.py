@@ -1,11 +1,13 @@
 import uuid
 from datetime import datetime
 from pydantic import BaseModel
+from task_manager.models import Priority
 
 class TaskCreate(BaseModel):
     name: str
     description: str
     completed: bool = False
+    priority: Priority = Priority.MEDIUM
 
 class TaskResponse(BaseModel):
     id: uuid.UUID

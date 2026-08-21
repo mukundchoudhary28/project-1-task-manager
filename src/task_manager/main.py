@@ -16,13 +16,14 @@ def root():
     return {"message": "Welcome to Task Management Platform!"}
 
 
-@app.post("/tasks/", response_model=TaskResponse)
+@app.post("/tasks/", response_model=TaskResponse, status_code=201)
 def create_task(task: TaskCreate, db: Session = Depends(get_db)):
 
     new_task = Task(
         name=task.name,
         description=task.description,
         completed=task.completed,
+        priority=task.priority
     )
 
     db.add(new_task)
@@ -38,6 +39,7 @@ def get_tasks(db: Session = Depends(get_db)):
     statement = select(Task) 
     tasks = db.execute(statement).scalars().all()
     return tasks
+
 
 @app.get("/tasks/{task_id}", response_model=TaskResponse)
 def get_task(task_id: uuid.UUID, db: Session = Depends(get_db)):
