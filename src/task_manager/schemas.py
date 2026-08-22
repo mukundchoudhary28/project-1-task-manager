@@ -1,7 +1,8 @@
 import uuid
 from datetime import datetime
 from pydantic import BaseModel
-from task_manager.models import Priority
+from task_manager.models import Priority, Role
+from enum import Enum
 
 class TaskCreate(BaseModel):
     name: str
@@ -20,9 +21,21 @@ class TaskResponse(BaseModel):
         "from_attributes": True
     }  
 
-
 class TaskUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
     completed: bool | None = None
+
+# --------------------------------------------
+
+class UserCreate(BaseModel):
+    email: str
+    password: str
+
+class UserResponse(BaseModel):
+    id: uuid.UUID
+    email: str
+    role: Role
+
+
     

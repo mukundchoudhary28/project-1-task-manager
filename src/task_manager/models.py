@@ -10,6 +10,12 @@ class Priority(str, PyEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
+
+class Role(str, PyEnum):
+    ADMIN = "admin"
+    MANAGER = "manager"
+    EMPLOYEE = "employee"
+
     
 class Base(DeclarativeBase):
     pass
@@ -55,3 +61,34 @@ class Task(Base):
     default=Priority.MEDIUM,
     nullable=False,
 )
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+            UUID(as_uuid=True),
+            primary_key=True,
+            default=uuid.uuid4,
+        )
+
+    email: Mapped[str] = mapped_column(
+        String(255),
+        unique = True,
+        nullable = False
+    )
+
+    password_hash: Mapped[str] = mapped_column(
+        String(255),
+        nullable = False
+    )
+
+    role: Mapped[Role] = mapped_column(
+        Enum(
+                Role,
+                name="roles_enum",
+                values_callable=lambda enum: [member.value for member in enum],
+            ),
+            default=Role.EMPLOYEE,
+            nullable=False
+    )

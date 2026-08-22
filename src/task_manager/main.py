@@ -4,9 +4,11 @@ from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
-from task_manager.models import Task
+from task_manager.models import Task, User
 from task_manager.database import get_db
 from task_manager.schemas import TaskCreate, TaskResponse, TaskUpdate
+from task_manager.schemas import UserCreate, UserResponse
+from task_manager.utils import hash_password, verify_password
 
 
 app = FastAPI()
@@ -82,5 +84,21 @@ def delete_task(task_id: uuid.UUID, db: Session = Depends(get_db)):
     db.delete(task)
     db.commit()
 
+
+
+@app.post("/register/", response_model=UserResponse, status_code=201)
+def register_user(user: UserCreate, db: Session = Depends(get_db)):
+    
+    statement = select(User).where(User.email == user.email)
+    u = db.execute(statement).scalar_one_or_none()
+    if u:
+        raise HTTPException(status_code = 409, detail="Email already in use.")
+
+    user_db = User(email = user.email,password_hash = hash_password(user.password))
+    db.add(user_db)
+    db.commit()
+    db.refresh(user_db)
+    return user_db
+        
 
 
