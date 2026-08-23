@@ -43,7 +43,7 @@ def test_create_task_missing_name(db):
     assert response.status_code == 422
 
 
-def test_get_tasks(db):
+def test_get_tasks(db, auth_headers):
     task1 = Task(
         name="Task 1",
         description="First test task",
@@ -59,7 +59,7 @@ def test_get_tasks(db):
     db.add_all([task1, task2])
     db.commit()
 
-    response = client.get("/tasks/")
+    response = client.get("/tasks/", headers=auth_headers)
     assert response.status_code == 200
 
     data = response.json()
@@ -68,8 +68,8 @@ def test_get_tasks(db):
     assert data[1]["name"] == "Task 2"
 
 
-def test_get_tasks_empty():
-    response = client.get("/tasks/")
+def test_get_tasks_empty(auth_headers):
+    response = client.get("/tasks/", headers=auth_headers)
     assert response.status_code == 200
     data = response.json()
     assert data == []

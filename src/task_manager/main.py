@@ -7,8 +7,11 @@ from sqlalchemy import select
 from task_manager.models import Task, User
 from task_manager.database import get_db
 from task_manager.schemas import TaskCreate, TaskResponse, TaskUpdate
-from task_manager.schemas import UserCreate, UserResponse
-from task_manager.utils import hash_password, verify_password
+from task_manager.schemas import UserCreate, UserResponse, LoginResponse
+from task_manager.utils import hash_password, verify_password, create_access_token
+from task_manager.dependencies import get_current_user
+
+from fastapi.security import OAuth2PasswordRequestForm
 
 
 app = FastAPI()
@@ -36,7 +39,7 @@ def create_task(task: TaskCreate, db: Session = Depends(get_db)):
 
 
 @app.get("/tasks/", response_model=list[TaskResponse])
-def get_tasks(db: Session = Depends(get_db)):
+def get_tasks(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     #Task is the model class that tells how every row in the database is structured. The select function is used to create a SQL SELECT statement that retrieves all rows from the Task table in the database. The statement variable holds this SQL statement, which can then be executed against the database to fetch the data.
     statement = select(Task) 
     tasks = db.execute(statement).scalars().all()
@@ -99,6 +102,37 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user_db)
     return user_db
-        
+
+
+@app.post("/login/", response_model=LoginResponse, status_code=200)
+def login_user(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
+    email = form_data.username
+    password = form_data.password
+
+    statement = select(User).where(User.email == email)
+    user = db.execute(statement).scalar_one_or_none()
+
+    if user is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid Email or Password!"
+        )
+
+    if not verify_password(password, user.password_hash):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid Email or Password!"
+        )
+
+    token = create_access_token(user.id)
+
+    return LoginResponse(
+        access_token=token,
+        token_type="bearer"
+    )
+    
 
 
