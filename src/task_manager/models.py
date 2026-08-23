@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime,UTC
 
 from enum import Enum as PyEnum
-from sqlalchemy import Boolean, DateTime, Enum, String, Text
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -60,7 +60,13 @@ class Task(Base):
     ),
     default=Priority.MEDIUM,
     nullable=False,
-)
+    )
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False,
+    )
 
 
 class User(Base):

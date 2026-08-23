@@ -22,13 +22,14 @@ def root():
 
 
 @app.post("/tasks/", response_model=TaskResponse, status_code=201)
-def create_task(task: TaskCreate, db: Session = Depends(get_db)):
+def create_task(task: TaskCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
 
     new_task = Task(
         name=task.name,
         description=task.description,
         completed=task.completed,
-        priority=task.priority
+        priority=task.priority,
+        user_id=current_user.id
     )
 
     db.add(new_task)
@@ -41,14 +42,14 @@ def create_task(task: TaskCreate, db: Session = Depends(get_db)):
 @app.get("/tasks/", response_model=list[TaskResponse])
 def get_tasks(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     #Task is the model class that tells how every row in the database is structured. The select function is used to create a SQL SELECT statement that retrieves all rows from the Task table in the database. The statement variable holds this SQL statement, which can then be executed against the database to fetch the data.
-    statement = select(Task) 
+    statement = select(Task).where(Task.user_id == current_user.id)
     tasks = db.execute(statement).scalars().all()
     return tasks
 
 
 @app.get("/tasks/{task_id}", response_model=TaskResponse)
-def get_task(task_id: uuid.UUID, db: Session = Depends(get_db)):
-    statement = select(Task).where(Task.id == task_id)
+def get_task(task_id: uuid.UUID, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    statement = select(Task).where(Task.id == task_id, Task.user_id == current_user.id)
     task = db.execute(statement).scalar_one_or_none()
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -56,8 +57,8 @@ def get_task(task_id: uuid.UUID, db: Session = Depends(get_db)):
     return task 
 
 @app.patch("/tasks/{task_id}", response_model=TaskResponse)
-def update_task(task_id: uuid.UUID, task_update: TaskUpdate, db: Session = Depends(get_db)):
-    statement = select(Task).where(Task.id == task_id)
+def update_task(task_id: uuid.UUID, task_update: TaskUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    statement = select(Task).where(Task.id == task_id, Task.user_id == current_user.id)
     task = db.execute(statement).scalar_one_or_none()
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -78,8 +79,8 @@ def update_task(task_id: uuid.UUID, task_update: TaskUpdate, db: Session = Depen
 
 
 @app.delete("/tasks/{task_id}", status_code=204)
-def delete_task(task_id: uuid.UUID, db: Session = Depends(get_db)):
-    statement = select(Task).where(Task.id == task_id)
+def delete_task(task_id: uuid.UUID, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    statement = select(Task).where(Task.id == task_id, Task.user_id == current_user.id)
     task = db.execute(statement).scalar_one_or_none()
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
