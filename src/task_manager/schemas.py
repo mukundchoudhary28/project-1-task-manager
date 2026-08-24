@@ -15,6 +15,7 @@ class TaskResponse(BaseModel):
     name: str
     description: str
     completed: bool
+    priority: Priority
     created_at: datetime  
 
     model_config = {
@@ -25,6 +26,8 @@ class TaskUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
     completed: bool | None = None
+    priority: Priority | None = None
+
 
 # --------------------------------------------
 
