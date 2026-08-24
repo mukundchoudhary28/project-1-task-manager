@@ -1,0 +1,72 @@
+services:
+  db:
+    image: postgres:17
+    container_name: task_manager_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: task_manager
+      POSTGRES_PASSWORD: task_manager_password
+      POSTGRES_DB: task_manager
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U task_manager -d task_manager"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  test_db:
+    profiles: ["test"]
+    image: postgres:17
+    container_name: task_manager_test_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: task_manager_test
+      POSTGRES_PASSWORD: task_manager_test_password
+      POSTGRES_DB: task_manager_test
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U task_manager_test -d task_manager_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: task_manager_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://task_manager:task_manager_password@db:5432/task_manager
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+  test:
+    profiles: ["test"]
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: task_manager_test
+    env_file:
+      - .env
+    environment:
+      TEST_DATABASE_URL: postgresql+psycopg://task_manager_test:task_manager_test_password@test_db:5432/task_manager_test
+    depends_on:
+      test_db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  postgres_test_data:
