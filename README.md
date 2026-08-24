@@ -10,6 +10,37 @@ Browser → Nginx (:80) → FastAPI (:8000) → PostgreSQL (:5432)
               └─ serves the Vite-built React app, and reverse-proxies /api/* to FastAPI
 ```
 
+
+
+                         INTERNET / BROWSER
+                                │
+                                │ HTTP
+                                ▼
+                     ┌─────────────────────┐
+                     │   Frontend Container │
+                     │                     │
+                     │       Nginx         │
+                     │                     │
+                     │  React static files │
+                     └──────────┬──────────┘
+                                │
+                       /api/*   │
+                                ▼
+                     ┌─────────────────────┐
+                     │    FastAPI API      │
+                     │                     │
+                     │     container       │
+                     └──────────┬──────────┘
+                                │
+                                │ db:5432
+                                ▼
+                     ┌─────────────────────┐
+                     │     PostgreSQL      │
+                     │                     │
+                     │      volume         │
+                     └─────────────────────┘
+
+                     
 React is built with Vite into static files, which Nginx serves. Nginx also reverse-proxies any request under `/api/` to the FastAPI backend, so the browser only ever talks to one origin — no CORS is needed between the frontend and API.
 
 ## Tech stack
@@ -95,32 +126,3 @@ frontend/              React + TypeScript client (see frontend/README.md)
   nginx.conf             Serves the built app, reverse-proxies /api/* to the api service
 docker-compose.yaml     frontend / db / test_db / api / test services
 ```
-
-
-                         INTERNET / BROWSER
-                                │
-                                │ HTTP
-                                ▼
-                     ┌─────────────────────┐
-                     │   Frontend Container │
-                     │                     │
-                     │       Nginx         │
-                     │                     │
-                     │  React static files │
-                     └──────────┬──────────┘
-                                │
-                       /api/*   │
-                                ▼
-                     ┌─────────────────────┐
-                     │    FastAPI API      │
-                     │                     │
-                     │     container       │
-                     └──────────┬──────────┘
-                                │
-                                │ db:5432
-                                ▼
-                     ┌─────────────────────┐
-                     │     PostgreSQL      │
-                     │                     │
-                     │      volume         │
-                     └─────────────────────┘
