@@ -20,6 +20,11 @@ app = FastAPI()
 def root():
     return {"message": "Welcome to Task Management Platform!"}
 
+@app.get("/health")
+def health():
+    return {
+        "status": "ok"
+    }
 
 @app.post("/tasks/", response_model=TaskResponse, status_code=201)
 def create_task(task: TaskCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
